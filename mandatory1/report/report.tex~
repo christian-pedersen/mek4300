@@ -1,0 +1,40 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, graphicx}
+
+\begin{document}
+
+\chapter*{Exercise i}
+The equation set to be solved numerically is \begin{equation} \begin{split} \mu \nabla ^2\vec{u} &= \nabla p \\ \nabla \cdot \vec{u} &= 0 \end{split} \end{equation}
+
+\section*{Equation 3-47, Ellipse}
+
+
+\section*{Equation 3-49, Triangle}
+
+\section*{Equation 3-51} 
+
+
+\chapter*{Exercise ii}
+
+The two equations\footnote{eq(148) and eq(150) from lecture notes.} to solve are \begin{equation} F''' + FF'' + 1 - (F')^2 = 0 \end{equation}
+\begin{equation} F''' + 2FF'' + 1 - (F')^2 = 0 \end{equation}
+with boundary conditions
+\begin{equation}\begin{split} F(0) = F'(0) &= 0 \\ F'(\infty) &= 1 \end{split}\end{equation} 
+
+I use the substitution \begin{equation} H = F' \end{equation}
+
+which leads me to the new equations to solve
+\begin{equation} H'' + FH' + 1 - H^2 = 0 \end{equation}
+\begin{equation} H'' + 2FH' + 1 - H^2 = 0 \end{equation}
+with boundary conditions
+\begin{equation}\begin{split} F(0) = H(0) &= 0 \\ H(\infty) &= 1 \end{split}\end{equation} 
+
+
+
+\chapter*{Exercise iii}
+
+
+
+
+\end{document}

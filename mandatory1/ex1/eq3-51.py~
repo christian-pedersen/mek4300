@@ -1,0 +1,93 @@
+
+
+from dolfin import *
+from mshr import *
+import numpy as np
+set_log_active(False)
+
+r_outer = 1
+r_inner= 0.2
+x_inner = -0.5
+y_inner = 0.0
+eps = 1E-4
+dpdx = 100
+mu = 2
+
+a = r_outer
+b = r_inner
+c = abs(x_inner)
+
+outer_circle = Circle(Point(0, 0), r_outer, 500)
+inner_circle = Circle(Point(x_inner, y_inner), r_inner, 100)
+domain = outer_circle - inner_circle
+mesh = generate_mesh(domain, 80)
+#plot(mesh, interactive=True)
+
+V = FunctionSpace(mesh, 'CG', 1)
+
+mf = FacetFunction("size_t", mesh)
+mf.set_all(2)
+
+class Outer_wall(SubDomain):
+    def inside(self, x, on_boundary):
+        return (on_boundary and (pow(x[0],2) + pow(x[1],2) - pow(r_outer,2) < eps)
+                            and (pow(x[0],2) + pow(x[1],2) - pow(r_outer,2) > -eps))
+
+class Inner_wall(SubDomain):
+    def inside(self, x, on_boundary):
+        return (on_boundary and (pow(x[0]-x_inner,2) + pow(x[1]-y_inner,2) - pow(r_inner,2) < eps)
+                            and (pow(x[0]-x_inner,2) + pow(x[1]-y_inner,2) - pow(r_inner,2) > -eps))
+
+class boundaries(SubDomain):
+    def inside(self, x, on_boundary):
+        return on_boundary
+"""
+outer_wall = Outer_wall()
+outer_wall.mark(mf, 1)
+
+inner_wall = Inner_wall()
+inner_wall.mark(mf, 1)
+"""
+walls = boundaries()
+walls.mark(mf, 1)
+#plot(mf, interactive=True)
+
+noslip = DirichletBC(V, Constant(0), mf, 1)
+"""
+Fn = Expression('(a*a - b*b + c*c) / (2*c)', a=a, b=b, c=c)
+Mn = Expression('sqrt(F*F - a*a)', F=F, a=a)
+alfan = Expression('0.5*log((F+M) / (F-M))', F=F, M=M)
+betan = Expression('0.5*log((F-c+M) / (F-c-M))', F=F, M=M, c=c)
+"""
+F = (a*a - b*b + c*c) / (2*c)
+M = np.sqrt(F*F - a*a)
+alfa = 0.5*np.log((F+M) / (F-M))
+beta = 0.5*np.log((F-c+M) / (F-c-M))
+term = 0
+term0 = 0
+n = 1
+while n < 1000 and diff > 1e-14:
+    term1 = n*np.exp(-n*(beta+alfa))/(np.sinh(n*beta - n*alfa))
+    term += term1
+    diff = abs(term1 - term0)
+    term1 = term0
+    n += 1
+    print n, diff, term
+Q = np.pi/(8*mu)*(-dpdx)*(a**4 - b**4 - 4*c*c*M*M/(beta-alfa) - 8*c*c*M*M*term)
+
+u = TrialFunction(V)
+v = TestFunction(V)
+a = -inner(grad(u), grad(v))*dx
+L = dpdx*v*dx
+u_ = Function(V)
+
+solve(a == L, u_, noslip)
+
+n = FacetNormal(mesh)
+flux = u_*dx
+plot(u_, interactive=True)
+total_flux = assemble(flux)
+
+
+print Q, total_flux
+

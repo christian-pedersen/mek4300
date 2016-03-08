@@ -1,0 +1,91 @@
+
+from dolfin import *
+from mshr import *
+import numpy as np
+set_log_active(False)
+
+r_outer = 1
+r_inner= 0.2
+x_inner = -0.5
+y_inner = 0.0
+dpdx = -100
+mu = 1
+
+a = r_outer
+b = r_inner
+c = abs(x_inner)
+
+def Q_exact(a, b, c, mu, dpdx):
+    F = (a*a - b*b + c*c) / (2*c)
+    M = np.sqrt(F*F - a*a)
+    alfa = 0.5*np.log((F+M) / (F-M))
+    beta = 0.5*np.log((F-c+M) / (F-c-M))
+    term = 0
+    term0 = 0
+    n = 1
+    diff = 1
+    while n < 1000 and diff > 1e-14:
+        term1 = n*np.exp(-n*(beta+alfa))/(np.sinh(n*beta - n*alfa))
+        term += term1
+        diff = abs(term - term1)
+        term1 = term0
+        n += 1
+        print n, diff, term
+    Q = np.pi/(8*mu)*(-dpdx)*(a**4 - b**4 - 4*c*c*M*M/(beta-alfa) - 8*c*c*M*M*term)
+    return Q
+
+Q = Q_exact(a, b, c, mu, dpdx)
+outer_circle = Circle(Point(0, 0), r_outer, 500)
+inner_circle = Circle(Point(x_inner, y_inner), r_inner, 100)
+domain = outer_circle - inner_circle
+
+
+class boundaries(SubDomain):
+    def inside(self, x, on_boundary):
+        return on_boundary
+
+O = [1, 2, 3]
+
+for o in O:
+    error = np.zeros(4)
+    mesh_size = np.zeros(4)
+    mesh = generate_mesh(domain, 1)
+    print ''
+    print 'Polynomial order:', o
+    for m in range(4):
+        mesh = refine(mesh)
+        mesh_size[m] = mesh.hmin()
+        V = FunctionSpace(mesh, 'CG', o)
+
+        mf = FacetFunction("size_t", mesh)
+        mf.set_all(2)
+
+        walls = boundaries()
+        walls.mark(mf, 1)
+        #plot(mf, interactive=True)
+
+        noslip = DirichletBC(V, Constant(0), mf, 1)
+
+        u = TrialFunction(V)
+        v = TestFunction(V)
+        a = -mu*inner(grad(u), grad(v))*dx
+        L = dpdx*v*dx
+        u_ = Function(V)
+
+        solve(a == L, u_, noslip)
+
+        flux = u_*dx
+        #plot(u_, interactive=True)
+        total_flux = assemble(flux)
+        
+        error[m] = abs(Q - total_flux)
+
+        print 'Mesh size:',mesh.hmin()
+        print 'Q_exact: %g, Q_numerical: %g, error: %g' %(Q, total_flux, error[m])
+        if m > 0:
+            print np.log(error[m]/error[m-1]) / np.log(mesh_size[m]/mesh_size[m-1])
+
+
+#uu = File("ex1_52_unum.pvd")
+#uu << u_
+
