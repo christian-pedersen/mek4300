@@ -32,17 +32,15 @@ H_, F_ = split(HF_)
 
 
 k = 0
-K = 1000
+K = 100
 eps = 1e-14
 error = 1
-HF_1 = Function(W)
+
+HF_1 = interpolate(Expression(('0', 'x[0]')), W)
 H_1, F_1 = split(HF_1)
 
-#H_1 = project(Expression('x[0]'), V, [BC1, BC3])
-H_1 = interpolate(Expression('x[0]'), V2)
-
-H1 = -inner(grad(H), grad(Ht))*dx +   F*H_1.dx(0)*Ht*dx + Ht*dx - H*H_1*Ht*dx
-H2 = -inner(grad(H), grad(Ht))*dx + 2*F*H_1.dx(0)*Ht*dx + Ht*dx - H*H_1*Ht*dx
+H1 = -inner(grad(H), grad(Ht))*dx +   F_1*H.dx(0)*Ht*dx + Ht*dx - H*H_1*Ht*dx
+H2 = -inner(grad(H), grad(Ht))*dx + 2*F_1*H.dx(0)*Ht*dx + Ht*dx - H*H_1*Ht*dx
 H3 = H*Ft*dx - F.dx(0)*Ft*dx
 
 H13 = H1 + H3

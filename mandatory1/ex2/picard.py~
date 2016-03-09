@@ -52,9 +52,7 @@ H23 = H2 + H3
 while k < K and error > eps:
     solve(lhs(H23) == rhs(H23), HF_, [BC1, BC2, BC3])
     error = errornorm(HF_, HF_1)
-    H_,F_ = split(HF_)
-    H_1, F_1 = split(HF_1)
-    H_1.assign(H_)
+    HF_1.assign(HF_)
     print "k = ",k,", Error = ", error
     k += 1
 
